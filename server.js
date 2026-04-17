@@ -71,17 +71,18 @@ app.get('/api/health', (req, res) =>
   })
 );
 
-// ── Root → serve frontend landing page (has Google OAuth + auth modal) ──────
+// ── Root → serve original frontend (rentlux_WORKING.html) ──────────────────
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
 });
 
-// ── SPA fallback — try the file in frontend/, else fall back to index.html ──
+// ── SPA fallback ────────────────────────────────────────────────────────────
+// Try to serve from frontend/ first (for dashboards); if not found, serve rentlux_WORKING.html
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   const file = path.join(__dirname, 'frontend', req.path);
   res.sendFile(file, err => {
-    if (err) res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+    if (err) res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
   });
 });
 
