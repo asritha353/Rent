@@ -259,7 +259,44 @@ const rejectApplication = async (req, res) => {
   }
 };
 
+// ─────────────────────────────────────────────
+// GET /api/owner/stats
+// ─────────────────────────────────────────────
+const getOwnerStats = async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT
+         COUNT(*)                                           AS total_listings,
+         SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) AS available,
+         SUM(CASE WHEN status = 'rented'    THEN 1 ELSE 0 END) AS rented,
+         SUM(CASE WHEN status = 'inactive'  THEN 1 ELSE 0 END) AS inactive
+       FROM Properties WHERE owner_id = @owner_id`,
+      { owner_id: { type: sql.VarChar(50), value: req.user.id } }
+    );
+
+    const pendingResult = await query(
+      `SELECT COUNT(*) AS pending_applications
+       FROM Applications a
+       JOIN Properties p ON a.property_id = p.id
+       WHERE p.owner_id = @owner_id AND a.status = 'pending'`,
+      { owner_id: { type: sql.VarChar(50), value: req.user.id } }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        ...result.recordset[0],
+        pending_applications: pendingResult.recordset[0].pending_applications,
+      },
+    });
+  } catch (err) {
+    console.error('[Owner] getOwnerStats:', err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 module.exports = {
   createProperty, getMyProperties, updateProperty, deleteProperty,
   getApplicationsForMyProperties, acceptApplication, rejectApplication,
+  getOwnerStats,
 };

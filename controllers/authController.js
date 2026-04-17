@@ -110,4 +110,36 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe };
+// PUT /api/auth/change-password  [protected]
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const result = await query(
+      'SELECT password_hash FROM Users WHERE id = @id',
+      { id: { type: sql.VarChar(50), value: req.user.id } }
+    );
+    if (result.recordset.length === 0)
+      return res.status(404).json({ success: false, message: 'User not found' });
+
+    const match = await bcrypt.compare(oldPassword, result.recordset[0].password_hash);
+    if (!match)
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await query(
+      'UPDATE Users SET password_hash = @hash, updated_at = GETDATE() WHERE id = @id',
+      {
+        hash: { type: sql.NVarChar(255), value: newHash },
+        id  : { type: sql.VarChar(50),   value: req.user.id },
+      }
+    );
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (err) {
+    console.error('[Auth] changePassword error:', err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+module.exports = { register, login, getMe, changePassword };
