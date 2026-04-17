@@ -104,6 +104,24 @@ async function initializeSchema() {
 
   console.log('[DB] ✅ Tables ready (Users, Properties, Applications, Agreements)');
 
+  // ── Safe column additions (idempotent — won't fail if columns already exist)
+  const alterColumns = [
+    `IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Users') AND name='google_id')
+       ALTER TABLE Users ADD google_id NVARCHAR(100) NULL`,
+    `IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Users') AND name='auth_provider')
+       ALTER TABLE Users ADD auth_provider NVARCHAR(20) DEFAULT 'local'`,
+    `IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Users') AND name='is_verified')
+       ALTER TABLE Users ADD is_verified BIT DEFAULT 0`,
+    `IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Users') AND name='is_active')
+       ALTER TABLE Users ADD is_active BIT DEFAULT 1`,
+    `IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Users') AND name='avatar_url')
+       ALTER TABLE Users ADD avatar_url NVARCHAR(500) NULL`,
+    `IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=OBJECT_ID('Users') AND name='updated_at')
+       ALTER TABLE Users ADD updated_at DATETIME2 DEFAULT GETDATE()`,
+  ];
+  for (const stmt of alterColumns) await p.request().query(stmt);
+  console.log('[DB] ✅ Schema columns verified (google_id, auth_provider, is_verified, is_active, avatar_url)');
+
   // Seed admin on first run
   const check = await p.request().query(`SELECT id FROM Users WHERE role = 'admin'`);
   if (check.recordset.length === 0) {

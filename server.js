@@ -5,7 +5,11 @@ const cors        = require('cors');
 const helmet      = require('helmet');
 const morgan      = require('morgan');
 const compression = require('compression');
+const session     = require('express-session');
 const path        = require('path');
+
+// Register Google strategy (must happen before routes load)
+const { passport } = require('./controllers/googleAuthController');
 
 const { initializeSchema }      = require('./database/db');
 const { apiLimiter }            = require('./middleware/rateLimiter');
@@ -25,6 +29,16 @@ app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// ── Session (required for Passport OAuth state — JWT takes over after callback)
+app.use(session({
+  secret           : process.env.SESSION_SECRET || 'rentlux_session_secret_2024',
+  resave           : false,
+  saveUninitialized: false,
+  cookie           : { secure: false, maxAge: 10 * 60 * 1000 }, // 10 min — OAuth flow only
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // ── General rate limiter on all /api routes ─────────────────────────────────
 app.use('/api', apiLimiter);
