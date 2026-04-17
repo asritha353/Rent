@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentLux — Premium Rental Property Platform</title>
+  <meta name="description" content="RentLux connects tenants, property owners, and administrators on a premium AI-powered rental management platform.">
+  <link rel="stylesheet" href="/css/theme.css">
+  <style>
+    /* ── Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 2rem 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 30%, rgba(99,102,241,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 70%, rgba(212,175,55,0.10) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.35rem 1rem; border-radius: 20px;
+      background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.3);
+      color: var(--gold); font-size: 0.78rem; font-weight: 600;
+      margin-bottom: 1.5rem; letter-spacing: 0.05em;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      line-height: 1.15; margin-bottom: 1.25rem;
+    }
+    .hero-title .accent {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-secondary); max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Stats Row */
+    .stats-row {
+      display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
+      margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--border);
+    }
+    .stat-item { text-align: center; }
+    .stat-item .n { font-size: 2rem; font-weight: 800; color: var(--gold); }
+    .stat-item .l { font-size: 0.8rem; color: var(--text-secondary); }
+
+    /* ── Features Grid */
+    .features { padding: 5rem 1.5rem; max-width: 1100px; margin: 0 auto; }
+    .features-title { text-align: center; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .features-sub   { text-align: center; color: var(--text-secondary); margin-bottom: 3rem; }
+    .features-grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 2rem;
+      backdrop-filter: blur(16px); transition: var(--transition);
+    }
+    .feature-card:hover { border-color: var(--border-gold); transform: translateY(-4px); }
+    .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .feature-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .feature-desc  { color: var(--text-secondary); font-size: 0.875rem; line-height: 1.6; }
+
+    /* ── Auth Modal */
+    .auth-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+    .auth-tab  {
+      flex: 1; padding: 0.75rem; background: transparent; border: none;
+      color: var(--text-secondary); cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 0.9rem; font-weight: 500; border-bottom: 2px solid transparent;
+      transition: var(--transition); margin-bottom: -1px;
+    }
+    .auth-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .role-selector {
+      display: flex; gap: 0.75rem; margin-bottom: 1rem;
+    }
+    .role-opt {
+      flex: 1; border: 2px solid var(--border);
+      border-radius: var(--radius-sm); padding: 0.75rem;
+      text-align: center; cursor: pointer; transition: var(--transition);
+      background: transparent;
+    }
+    .role-opt.selected { border-color: var(--indigo); background: rgba(99,102,241,0.12); }
+    .role-opt .role-emoji { font-size: 1.5rem; display: block; margin-bottom: 0.25rem; }
+    .role-opt .role-name  { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
+
+    /* ── Floating nav */
+    .landing-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(7,9,26,0.8); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .landing-nav-links { display: flex; gap: 0.5rem; }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="landing-nav">
+  <a class="nav-brand" href="/">Rent<span>Lux</span></a>
+  <div class="landing-nav-links">
+    <button class="nav-btn" onclick="showAuthModal('login')">Log In</button>
+    <button class="nav-btn primary" onclick="showAuthModal('register')">Get Started</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" style="padding-top: 5rem;">
+  <div class="hero-badge">✨ AI-Powered Property Management</div>
+  <h1 class="hero-title">
+    Find Your Perfect<br><span class="accent">Rental Home</span>
+  </h1>
+  <p class="hero-sub">
+    RentLux connects tenants, property owners, and administrators on one intelligent platform —
+    with smart search, seamless applications, and AI-generated rental agreements.
+  </p>
+  <div class="hero-cta">
+    <button class="btn btn-gold btn-lg" onclick="showAuthModal('register')">Start Searching →</button>
+    <button class="btn btn-ghost btn-lg" onclick="showAuthModal('login')">I have an account</button>
+  </div>
+
+  <!-- Live stats -->
+  <div class="stats-row" id="hero-stats">
+    <div class="stat-item"><div class="n">—</div><div class="l">Properties Listed</div></div>
+    <div class="stat-item"><div class="n">2</div><div class="l">Cities Covered</div></div>
+    <div class="stat-item"><div class="n">3</div><div class="l">User Roles</div></div>
+    <div class="stat-item"><div class="n">AI</div><div class="l">Powered Agreements</div></div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <h2 class="features-title">Everything you need to rent smarter</h2>
+  <p class="features-sub">Built for tenants, owners, and administrators</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3 class="feature-title">Smart Property Search</h3>
+      <p class="feature-desc">Filter by city, BHK, price range, and property type. Smart search understands natural language queries like "2BHK in Hyderabad under ₹20,000".</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <h3 class="feature-title">Streamlined Applications</h3>
+      <p class="feature-desc">Tenants apply in one click. Owners review, accept, or reject applications. Real-time status tracking for every application.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📜</div>
+      <h3 class="feature-title">AI Rental Agreements</h3>
+      <p class="feature-desc">Once accepted, generate a professional rental agreement instantly using Groq AI. Both parties can digitally sign within the platform.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏠</div>
+      <h3 class="feature-title">Owner Property Hub</h3>
+      <p class="feature-desc">Owners list and manage their properties, view all incoming applications, and track rental status from a beautiful dashboard.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3 class="feature-title">Admin Analytics</h3>
+      <p class="feature-desc">Admins get real-time system stats, manage all users and listings, and monitor the full application pipeline in one view.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3 class="feature-title">AI Assistant</h3>
+      <p class="feature-desc">Ask the RentLux AI chatbot anything — find properties, understand lease terms, or get guided through the rental process step by step.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="auth-modal-title">Welcome to RentLux</h3>
+      <button class="modal-close" onclick="hideAuthModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login"    onclick="switchAuthTab('login')">Log In</button>
+        <button class="auth-tab"        id="tab-register" onclick="switchAuthTab('register')">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="form-login">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input id="login-email" type="email" class="form-control" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="login-password" type="password" class="form-control" placeholder="••••••••">
+        </div>
+        <div class="form-group" style="margin-top:0.5rem;">
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;">
+            Admin demo: admin@rentlux.com / Admin@123
+          </p>
+          <button class="btn btn-primary" style="width:100%" onclick="doLogin()" id="login-btn">Log In</button>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="form-register" style="display:none;">
+        <!-- Role Selection -->
+        <div class="form-group">
+          <label class="form-label">I am a…</label>
+          <div class="role-selector">
+            <div class="role-opt selected" id="role-tenant" onclick="selectRole('tenant')">
+              <span class="role-emoji">🔍</span>
+              <span class="role-name">Tenant</span>
+            </div>
+            <div class="role-opt" id="role-owner" onclick="selectRole('owner')">
+              <span class="role-emoji">🏠</span>
+              <span class="role-name">Owner</span>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="reg-role" value="tenant">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input id="reg-name" type="text" class="form-control" placeholder="Ravi Kumar">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input id="reg-email" type="email" class="form-control" placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="reg-password" type="password" class="form-control" placeholder="Min 6 characters">
+        </div>
+        <button class="btn btn-gold" style="width:100%;margin-top:0.5rem" onclick="doRegister()" id="reg-btn">Create Account</button>
+      </div>
+
+      <div id="auth-error" style="margin-top:0.75rem;font-size:0.825rem;color:var(--danger);display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  // If already logged in, redirect to dashboard
+  (function() {
+    const u = getUser();
+    if (u && getToken()) redirectToDashboard(u.role);
+  })();
+
+  // Load live stats
+  (function() {
+    propertyAPI.getStats().then(r => {
+      const statsEl = document.getElementById('hero-stats');
+      if (r.data) {
+        statsEl.children[0].querySelector('.n').textContent =
+          Number(r.data.total || 0).toLocaleString('en-IN');
+      }
+    }).catch(() => {});
+  })();
+
+  // ── Auth Modal
+  function showAuthModal(tab = 'login') {
+    document.getElementById('auth-modal').style.display = 'flex';
+    switchAuthTab(tab);
+  }
+  function hideAuthModal() {
+    document.getElementById('auth-modal').style.display = 'none';
+    clearAuthError();
+  }
+  document.getElementById('auth-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('auth-modal')) hideAuthModal();
+  });
+
+  function switchAuthTab(tab) {
+    document.getElementById('form-login').style.display    = tab === 'login'    ? '' : 'none';
+    document.getElementById('form-register').style.display = tab === 'register' ? '' : 'none';
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    clearAuthError();
+  }
+
+  function selectRole(role) {
+    document.getElementById('reg-role').value = role;
+    document.querySelectorAll('.role-opt').forEach(el => el.classList.remove('selected'));
+    document.getElementById('role-' + role).classList.add('selected');
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg; el.style.display = '';
+  }
+  function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
+
+  async function doLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) return showAuthError('Please enter email and password.');
+    clearAuthError();
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true; btn.textContent = 'Logging in…';
+    try {
+      const res = await authAPI.login({ email, password });
+      setAuth(res.data.token, res.data.user);
+      redirectToDashboard(res.data.user.role);
+    } catch (err) {
+      showAuthError(err.message);
+      btn.disabled = false; btn.textContent = 'Log In';
+    }
+  }
+
+  async function doRegister() {
+    const name     = document.getElementById('reg-name').value.trim();
+    const email    = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const role     = document.getElementById('reg-role').value;
+    if (!name || !email || !password) return showAuthError('All fields are required.');
+    if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+    clearAuthError();
+    const btn = document.getElementById('reg-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      const res = await authAPI.register({ name, email, password, role });
+      setAuth(res.data.token, res.data.user);
+      redirectToDashboard(res.data.user.role);
+    } catch (err) {
+      showAuthError(err.message);
+      btn.disabled = false; btn.textContent = 'Create Account';
+    }
+  }
+
+  // Allow Enter key to submit
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('form-login').style.display !== 'none') doLogin();
+    else doRegister();
+  });
+</script>
+</body>
+</html>

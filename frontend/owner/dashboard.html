@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owner Dashboard — RentLux</title>
+  <meta name="description" content="Manage your property listings, review tenant applications, and generate rental agreements.">
+  <link rel="stylesheet" href="/css/theme.css">
+  <style>
+    .prop-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; }
+    .section-title  { font-size:1.1rem; font-weight:600; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Rent<span>Lux</span></a>
+  <div class="nav-links" id="nav-user-info"></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title" id="welcome-title">Owner Dashboard</h1>
+    <p class="page-subtitle">Manage your listings and tenant applications</p>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-grid" id="owner-stats">
+    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-value" id="s-total">—</div><div class="stat-label">Total Listings</div></div>
+    <div class="stat-card"><div class="stat-icon">🟢</div><div class="stat-value" id="s-available">—</div><div class="stat-label">Available</div></div>
+    <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-value" id="s-rented">—</div><div class="stat-label">Rented Out</div></div>
+    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="s-pending">—</div><div class="stat-label">Pending Applications</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-listings"     onclick="switchTab('tab-listings')">🏠 My Listings</button>
+    <button class="tab-btn"        data-tab="tab-applications" onclick="switchTab('tab-applications')">📋 Applications</button>
+    <button class="tab-btn"        data-tab="tab-add"          onclick="switchTab('tab-add')">➕ Add Property</button>
+  </div>
+
+  <!-- ─── TAB: My Listings ─── -->
+  <div id="tab-listings" class="tab-pane active">
+    <div class="section-header">
+      <span class="section-title">My Properties</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadMyProperties()">↻ Refresh</button>
+    </div>
+    <div id="listings-grid" class="grid-3">
+      <div class="loading-overlay"><div class="spinner"></div></div>
+    </div>
+    <div id="listings-pagination" style="display:flex;gap:0.5rem;justify-content:center;margin-top:1.5rem;flex-wrap:wrap;"></div>
+  </div>
+
+  <!-- ─── TAB: Applications ─── -->
+  <div id="tab-applications" class="tab-pane">
+    <div class="section-header">
+      <span class="section-title">Tenant Applications</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadApplications()">↻ Refresh</button>
+    </div>
+
+    <!-- Filter by status -->
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-ghost status-filter active-filter" onclick="filterApps('all', this)">All</button>
+      <button class="btn btn-sm btn-ghost status-filter" onclick="filterApps('pending', this)">⏳ Pending</button>
+      <button class="btn btn-sm btn-ghost status-filter" onclick="filterApps('accepted', this)">✅ Accepted</button>
+      <button class="btn btn-sm btn-ghost status-filter" onclick="filterApps('rejected', this)">❌ Rejected</button>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Property</th><th>Tenant</th><th>Email</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="app-tbody">
+            <tr><td colspan="6" class="loading-overlay"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: Add Property ─── -->
+  <div id="tab-add" class="tab-pane">
+    <div class="card" style="max-width:680px;margin:0 auto;">
+      <h3 class="card-title">List a New Property</h3>
+      <div id="add-success" style="display:none;" class="agreement-box" style="margin-bottom:1rem">
+        ✅ Property listed! <a href="#" onclick="switchTab('tab-listings');loadMyProperties()">View listings →</a>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Property Title *</label>
+          <input id="p-title" class="form-control" placeholder="e.g. Spacious 2BHK in Banjara Hills">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City *</label>
+          <select id="p-city" class="form-control">
+            <option value="">Select city</option>
+            <option value="Hyderabad">Hyderabad</option>
+            <option value="Vijayawada">Vijayawada</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Chennai">Chennai</option>
+            <option value="Mumbai">Mumbai</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Rent (₹) *</label>
+          <input id="p-price" class="form-control" type="number" placeholder="25000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">BHK</label>
+          <select id="p-bhk" class="form-control">
+            <option value="">Select</option>
+            <option value="1">1 BHK</option>
+            <option value="2">2 BHK</option>
+            <option value="3">3 BHK</option>
+            <option value="4">4 BHK</option>
+            <option value="5">5 BHK</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Property Type</label>
+          <select id="p-type" class="form-control">
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="House">House</option>
+            <option value="Plot">Plot</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Area</label>
+          <input id="p-location" class="form-control" placeholder="e.g. Jubilee Hills, Hyderabad">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="p-description" class="form-control" placeholder="Describe amenities, furnishing, nearby landmarks…" rows="4"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Image URLs (comma-separated)</label>
+        <input id="p-images" class="form-control" placeholder="https://…, https://…">
+        <small style="color:var(--text-muted);font-size:0.75rem">Paste image links separated by commas</small>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
+        <button class="btn btn-gold" onclick="submitProperty()" id="add-btn">🏠 List Property</button>
+        <button class="btn btn-ghost" onclick="clearAddForm()">Clear</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Property Modal content is injected dynamically -->
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  const currentUser = requireAuth(['owner']);
+  if (currentUser) {
+    document.getElementById('welcome-title').textContent = `Welcome, ${currentUser.name} 👋`;
+    renderNav(currentUser);
+  }
+
+  let allApps = [];
+
+  // ── Stats ─────────────────────────────────────
+  async function loadStats() {
+    try {
+      const props = await ownerAPI.myProperties({ limit: 100 });
+      const apps  = await ownerAPI.applications();
+      allApps     = apps.data || [];
+
+      const total     = props.total || 0;
+      const available = (props.data || []).filter(p => p.status === 'available').length;
+      const rented    = (props.data || []).filter(p => p.status === 'rented').length;
+      const pending   = allApps.filter(a => a.status === 'pending').length;
+
+      document.getElementById('s-total').textContent     = total;
+      document.getElementById('s-available').textContent = available;
+      document.getElementById('s-rented').textContent    = rented;
+      document.getElementById('s-pending').textContent   = pending;
+
+      renderAppTable(allApps);
+    } catch { /* ignore stats errors */ }
+  }
+
+  // ── My Listings ───────────────────────────────
+  async function loadMyProperties(page = 1) {
+    const grid = document.getElementById('listings-grid');
+    grid.innerHTML = '<div class="loading-overlay"><div class="spinner"></div></div>';
+
+    try {
+      const res = await ownerAPI.myProperties({ page, limit: 9 });
+      renderListings(res.data || []);
+      renderListingsPagination(res.totalPages || 1, page);
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><h3>${err.message}</h3></div>`;
+    }
+  }
+
+  function renderListings(props) {
+    const grid = document.getElementById('listings-grid');
+    if (!props.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🏠</div><h3>No listings yet</h3>
+        <p>Click "Add Property" to list your first property</p>
+        <button class="btn btn-gold" style="margin-top:1rem" onclick="switchTab('tab-add')">➕ Add Property</button>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = props.map(p => `
+      <div class="property-card">
+        ${propImg(p.images, p.title)}
+        <div class="property-body">
+          <div style="display:flex;align-items:center;gap:0.5rem;justify-content:space-between;">
+            <div class="property-price">${formatCurrency(p.price)}<span style="font-size:0.7rem;font-weight:400;color:var(--text-muted)">/mo</span></div>
+            ${statusBadge(p.status)}
+          </div>
+          <div class="property-title">${p.title}</div>
+          <div class="property-location">📍 ${p.location || p.city}</div>
+          <div class="property-meta">
+            ${p.bhk ? `<span class="property-tag">${p.bhk} BHK</span>` : ''}
+            <span class="property-tag">${p.type}</span>
+            ${p.pending_applications > 0 ? `<span class="badge badge-warning">${p.pending_applications} pending</span>` : ''}
+          </div>
+        </div>
+        <div class="property-actions prop-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEditModal(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProperty('${p.id}', '${p.title.replace(/'/g,"\\'")}')">🗑 Delete</button>
+          <button class="btn btn-primary btn-sm" onclick="switchTab('tab-applications')">📋 Apps</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function renderListingsPagination(total, current) {
+    const pg = document.getElementById('listings-pagination');
+    if (total <= 1) { pg.innerHTML = ''; return; }
+    let html = '';
+    if (current > 1) html += `<button class="btn btn-ghost btn-sm" onclick="loadMyProperties(${current-1})">‹ Prev</button>`;
+    for (let i = Math.max(1,current-2); i <= Math.min(total,current+2); i++)
+      html += `<button class="btn btn-sm ${i===current?'btn-primary':'btn-ghost'}" onclick="loadMyProperties(${i})">${i}</button>`;
+    if (current < total) html += `<button class="btn btn-ghost btn-sm" onclick="loadMyProperties(${current+1})">Next ›</button>`;
+    pg.innerHTML = html;
+  }
+
+  // ── Edit Property ─────────────────────────────
+  function openEditModal(p) {
+    showModal(`
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Title</label>
+          <input id="e-title" class="form-control" value="${escAttr(p.title)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">City</label>
+          <input id="e-city" class="form-control" value="${escAttr(p.city)}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price (₹/mo)</label>
+          <input id="e-price" class="form-control" type="number" value="${p.price}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">BHK</label>
+          <input id="e-bhk" class="form-control" type="number" value="${p.bhk || ''}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select id="e-type" class="form-control">
+            <option ${p.type==='Apartment'?'selected':''}>Apartment</option>
+            <option ${p.type==='Villa'?'selected':''}>Villa</option>
+            <option ${p.type==='House'?'selected':''}>House</option>
+            <option ${p.type==='Plot'?'selected':''}>Plot</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="e-status" class="form-control">
+            <option value="available" ${p.status==='available'?'selected':''}>Available</option>
+            <option value="rented"    ${p.status==='rented'?'selected':''}>Rented</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea id="e-desc" class="form-control">${escAttr(p.description || '')}</textarea>
+      </div>
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem;">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-gold" onclick="saveEdit('${p.id}')">Save Changes</button>
+      </div>`, `Edit: ${p.title}`);
+  }
+
+  async function saveEdit(id) {
+    const data = {
+      title      : document.getElementById('e-title').value,
+      city       : document.getElementById('e-city').value,
+      price      : document.getElementById('e-price').value,
+      bhk        : document.getElementById('e-bhk').value,
+      type       : document.getElementById('e-type').value,
+      description: document.getElementById('e-desc').value,
+      status     : document.getElementById('e-status').value,
+    };
+    try {
+      await ownerAPI.updateProperty(id, data);
+      closeModal();
+      showToast('Property updated!');
+      loadMyProperties(); loadStats();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteProperty(id, title) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    try {
+      await ownerAPI.deleteProperty(id);
+      showToast('Property deleted');
+      loadMyProperties(); loadStats();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  // ── Applications ──────────────────────────────
+  async function loadApplications() {
+    try {
+      const res = await ownerAPI.applications();
+      allApps = res.data || [];
+      renderAppTable(allApps);
+    } catch (err) {
+      document.getElementById('app-tbody').innerHTML =
+        `<tr><td colspan="6" style="color:var(--danger);padding:1rem">${err.message}</td></tr>`;
+    }
+  }
+
+  let currentFilter = 'all';
+  function filterApps(status, btn) {
+    currentFilter = status;
+    document.querySelectorAll('.status-filter').forEach(b => b.classList.remove('active-filter','btn-primary'));
+    btn.classList.add('active-filter','btn-primary');
+    renderAppTable(allApps);
+  }
+
+  function renderAppTable(apps) {
+    const filtered = currentFilter === 'all' ? apps : apps.filter(a => a.status === currentFilter);
+    const tbody = document.getElementById('app-tbody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="6">
+        <div class="empty-state"><div class="empty-icon">📋</div>
+        <h3>No ${currentFilter === 'all' ? '' : currentFilter} applications</h3></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = filtered.map(a => `
+      <tr>
+        <td>
+          <div style="font-weight:500">${a.property_title}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:2px">${formatCurrency(a.price)}/mo</div>
+        </td>
+        <td>${a.tenant_name}</td>
+        <td style="font-size:0.82rem;color:var(--text-secondary)">${a.tenant_email}</td>
+        <td>${formatDate(a.applied_at)}</td>
+        <td>${statusBadge(a.status)}</td>
+        <td>
+          ${a.status === 'pending' ? `
+            <div style="display:flex;gap:0.4rem;">
+              <button class="btn btn-success btn-sm" onclick="handleApp('${a.id}','accept')">Accept</button>
+              <button class="btn btn-danger btn-sm"  onclick="handleApp('${a.id}','reject')">Reject</button>
+            </div>` : a.status === 'accepted' ? `
+            <button class="btn btn-gold btn-sm" onclick="generateAgreement('${a.id}')">📜 Agreement</button>`
+            : '<span style="color:var(--text-muted);font-size:0.8rem">—</span>'}
+        </td>
+      </tr>`).join('');
+  }
+
+  async function handleApp(id, action) {
+    const label = action === 'accept' ? 'Accept' : 'Reject';
+    if (!confirm(`${label} this application?`)) return;
+    try {
+      if (action === 'accept') await ownerAPI.accept(id);
+      else                     await ownerAPI.reject(id);
+      showToast(`Application ${action}ed ✅`);
+      loadApplications(); loadStats();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function generateAgreement(appId) {
+    try {
+      const res = await agreementAPI.generate(appId);
+      showModal(`
+        <div class="agreement-box">
+          <p style="margin-bottom:0.5rem;font-weight:600">📝 Rental Agreement Generated</p>
+          <div class="agreement-text">${escHtml(res.data.terms)}</div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+            ${res.data.signed_owner
+              ? '<span class="badge badge-success">✅ You already signed</span>'
+              : `<button class="btn btn-gold btn-sm" onclick="signAgreement('${res.data.id}')">Sign as Owner</button>`}
+          </div>
+        </div>`, 'Rental Agreement');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function signAgreement(agrId) {
+    try {
+      await agreementAPI.sign(agrId);
+      showToast('Agreement signed!');
+      closeModal();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Add Property ──────────────────────────────
+  async function submitProperty() {
+    const title       = document.getElementById('p-title').value.trim();
+    const city        = document.getElementById('p-city').value;
+    const price       = document.getElementById('p-price').value;
+    const bhk         = document.getElementById('p-bhk').value;
+    const type        = document.getElementById('p-type').value;
+    const location    = document.getElementById('p-location').value.trim();
+    const description = document.getElementById('p-description').value.trim();
+    const imagesRaw   = document.getElementById('p-images').value;
+    const images      = imagesRaw ? imagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+    if (!title || !city || !price) return showToast('Title, city and price are required', 'error');
+    const btn = document.getElementById('add-btn');
+    btn.disabled = true; btn.textContent = 'Listing…';
+    try {
+      await ownerAPI.createProperty({ title, city, price: Number(price), bhk: bhk ? Number(bhk) : null, type, location, description, images });
+      document.getElementById('add-success').style.display = '';
+      clearAddForm();
+      showToast('✅ Property listed successfully!');
+      loadStats(); loadMyProperties();
+      setTimeout(() => switchTab('tab-listings'), 1500);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = '🏠 List Property';
+    }
+  }
+
+  function clearAddForm() {
+    ['p-title','p-city','p-price','p-bhk','p-location','p-description','p-images']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  }
+
+  // ── Helpers
+  function escAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function escHtml(s)  { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+  // ── Init
+  loadStats();
+  loadMyProperties();
+  loadApplications();
+</script>
+<script src="/js/chatbot.js"></script>
+</body>
+</html>

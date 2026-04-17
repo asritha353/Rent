@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — RentLux</title>
+  <meta name="description" content="System administration — manage users, properties, and applications on RentLux.">
+  <link rel="stylesheet" href="/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .chart-container { position: relative; height: 220px; }
+    .section-header  { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+    .section-title   { font-size:1.05rem; font-weight:600; }
+    .del-btn         { background:transparent; border:none; cursor:pointer; color:var(--danger); font-size:1rem; padding:0.2rem 0.4rem; border-radius:4px; transition:var(--transition); }
+    .del-btn:hover   { background:rgba(239,68,68,0.15); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="nav-brand" href="/">Rent<span>Lux</span></a>
+  <div class="nav-links" id="nav-user-info"></div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">Admin Control Panel</h1>
+    <p class="page-subtitle">Monitor users, properties, and applications system-wide</p>
+  </div>
+
+  <!-- Stats Widgets -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="s-users">—</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-value" id="s-owners">—</div><div class="stat-label">Owners</div></div>
+    <div class="stat-card"><div class="stat-icon">🔍</div><div class="stat-value" id="s-tenants">—</div><div class="stat-label">Tenants</div></div>
+    <div class="stat-card"><div class="stat-icon">🏘️</div><div class="stat-value" id="s-listings">—</div><div class="stat-label">Total Listings</div></div>
+    <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-value" id="s-apps">—</div><div class="stat-label">Applications</div></div>
+    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-value" id="s-pending">—</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="s-accepted">—</div><div class="stat-label">Accepted</div></div>
+    <div class="stat-card"><div class="stat-icon">🔴</div><div class="stat-value" id="s-rented">—</div><div class="stat-label">Rented</div></div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid-2" style="margin-bottom:2rem;">
+    <div class="card">
+      <div class="card-title">Users by Role</div>
+      <div class="chart-container"><canvas id="chart-roles"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Application Status</div>
+      <div class="chart-container"><canvas id="chart-apps"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-users"       onclick="switchTab('tab-users')">👥 Users</button>
+    <button class="tab-btn"        data-tab="tab-properties"  onclick="switchTab('tab-properties')">🏠 Properties</button>
+    <button class="tab-btn"        data-tab="tab-applications"onclick="switchTab('tab-applications')">📋 Applications</button>
+  </div>
+
+  <!-- ─── TAB: Users ─── -->
+  <div id="tab-users" class="tab-pane active">
+    <div class="section-header">
+      <span class="section-title">All Users</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Refresh</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="5" class="loading-overlay"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="users-pagination" style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: Properties ─── -->
+  <div id="tab-properties" class="tab-pane">
+    <div class="section-header">
+      <span class="section-title">DB-listed Properties (Owner-posted)</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadAdminProperties()">↻ Refresh</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Title</th><th>City</th><th>Rent</th><th>Owner</th><th>Status</th><th>Listed</th><th>Action</th></tr></thead>
+          <tbody id="props-tbody">
+            <tr><td colspan="7" class="loading-overlay"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="props-pagination" style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: Applications ─── -->
+  <div id="tab-applications" class="tab-pane">
+    <div class="section-header">
+      <span class="section-title">All Applications</span>
+      <button class="btn btn-ghost btn-sm" onclick="loadAdminApplications()">↻ Refresh</button>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-ghost app-filter active-filter" onclick="setAppFilter('all',this)">All</button>
+      <button class="btn btn-sm btn-ghost app-filter" onclick="setAppFilter('pending',this)">⏳ Pending</button>
+      <button class="btn btn-sm btn-ghost app-filter" onclick="setAppFilter('accepted',this)">✅ Accepted</button>
+      <button class="btn btn-sm btn-ghost app-filter" onclick="setAppFilter('rejected',this)">❌ Rejected</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Tenant</th><th>Owner</th><th>Applied</th><th>Resolved</th><th>Status</th></tr></thead>
+          <tbody id="apps-tbody">
+            <tr><td colspan="6" class="loading-overlay"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="apps-pagination" style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+  const currentUser = requireAuth(['admin']);
+  if (currentUser) renderNav(currentUser);
+
+  let chartRoles, chartApps;
+  let allAppData = [], appFilter = 'all';
+
+  // ── Stats + Charts ────────────────────────────
+  async function loadStats() {
+    try {
+      const res  = await adminAPI.stats();
+      const data = res.data;
+
+      document.getElementById('s-users').textContent    = data.users;
+      document.getElementById('s-owners').textContent   = data.owners;
+      document.getElementById('s-tenants').textContent  = data.tenants;
+      document.getElementById('s-listings').textContent = data.totalListings;
+      document.getElementById('s-apps').textContent     = data.applications;
+      document.getElementById('s-pending').textContent  = data.pendingApplications;
+      document.getElementById('s-accepted').textContent = data.acceptedApplications;
+      document.getElementById('s-rented').textContent   = data.rentedProperties;
+
+      renderCharts(data);
+    } catch (err) {
+      console.error('Stats error:', err.message);
+    }
+  }
+
+  function renderCharts(d) {
+    const pal = {
+      indigo : 'rgba(99,102,241,0.8)',
+      gold   : 'rgba(212,175,55,0.8)',
+      danger : 'rgba(239,68,68,0.8)',
+      success: 'rgba(34,197,94,0.8)',
+      muted  : 'rgba(148,163,184,0.5)',
+    };
+    const opts = {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 12 } } } },
+    };
+
+    if (chartRoles) chartRoles.destroy();
+    chartRoles = new Chart(document.getElementById('chart-roles'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Tenants', 'Owners', 'Admins'],
+        datasets: [{ data: [d.tenants, d.owners, Math.max(0, d.users - d.tenants - d.owners)],
+          backgroundColor: [pal.indigo, pal.gold, pal.danger], borderWidth: 0 }],
+      },
+      options: { ...opts },
+    });
+
+    if (chartApps) chartApps.destroy();
+    const pending  = d.pendingApplications;
+    const accepted = d.acceptedApplications;
+    const other    = Math.max(0, d.applications - pending - accepted);
+    chartApps = new Chart(document.getElementById('chart-apps'), {
+      type: 'bar',
+      data: {
+        labels: ['Pending', 'Accepted', 'Rejected/Other'],
+        datasets: [{ data: [pending, accepted, other],
+          backgroundColor: [pal.gold, pal.success, pal.danger],
+          borderRadius: 6, borderWidth: 0 }],
+      },
+      options: {
+        ...opts,
+        scales: {
+          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true },
+        },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
+
+  // ── Users ─────────────────────────────────────
+  async function loadUsers(page = 1) {
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = '<tr><td colspan="5" class="loading-overlay"><div class="spinner"></div></td></tr>';
+    try {
+      const res = await adminAPI.users({ page, limit: 15 });
+      renderUsersTable(res.data || []);
+      renderPager('users-pagination', res.totalPages || 1, page, loadUsers);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger);padding:1rem">${err.message}</td></tr>`;
+    }
+  }
+
+  function renderUsersTable(users) {
+    const tbody = document.getElementById('users-tbody');
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👥</div><h3>No users found</h3></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--gold));display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;">
+              ${u.name[0].toUpperCase()}
+            </div>
+            <span style="font-weight:500">${u.name}</span>
+          </div>
+        </td>
+        <td style="color:var(--text-secondary);font-size:0.85rem">${u.email}</td>
+        <td><span class="nav-role-badge role-${u.role}">${u.role}</span></td>
+        <td style="color:var(--text-secondary);font-size:0.82rem">${formatDate(u.created_at)}</td>
+        <td>${u.role !== 'admin' ? `<button class="del-btn" title="Delete user" onclick="deleteUser('${u.id}','${escAttr(u.name)}')">🗑</button>` : '<span style="color:var(--text-muted);font-size:0.78rem">protected</span>'}</td>
+      </tr>`).join('');
+  }
+
+  async function deleteUser(id, name) {
+    if (!confirm(`Delete user "${name}"? This will remove all their data.`)) return;
+    try {
+      await adminAPI.deleteUser(id);
+      showToast('User deleted');
+      loadUsers(); loadStats();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Properties ────────────────────────────────
+  async function loadAdminProperties(page = 1) {
+    const tbody = document.getElementById('props-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-overlay"><div class="spinner"></div></td></tr>';
+    try {
+      const res = await adminAPI.properties({ page, limit: 15 });
+      renderPropsTable(res.data || []);
+      renderPager('props-pagination', res.totalPages || 1, page, loadAdminProperties);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:1rem">${err.message}</td></tr>`;
+    }
+  }
+
+  function renderPropsTable(props) {
+    const tbody = document.getElementById('props-tbody');
+    if (!props.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🏠</div><h3>No DB properties yet</h3><p>These appear when owners post listings.</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = props.map(p => `
+      <tr>
+        <td>
+          <div style="font-weight:500">${p.title}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary)">${p.type}${p.bhk ? ' · ' + p.bhk + ' BHK' : ''}</div>
+        </td>
+        <td>${p.city}</td>
+        <td>${formatCurrency(p.price)}</td>
+        <td>
+          <div style="font-size:0.85rem">${p.owner_name}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary)">${p.owner_email}</div>
+        </td>
+        <td>${statusBadge(p.status)}</td>
+        <td style="color:var(--text-secondary);font-size:0.82rem">${formatDate(p.created_at)}</td>
+        <td><button class="del-btn" onclick="deleteProperty('${p.id}','${escAttr(p.title)}')">🗑</button></td>
+      </tr>`).join('');
+  }
+
+  async function deleteProperty(id, title) {
+    if (!confirm(`Delete property "${title}"? All related applications will also be deleted.`)) return;
+    try {
+      await adminAPI.deleteProperty(id);
+      showToast('Property deleted');
+      loadAdminProperties(); loadStats();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Applications ──────────────────────────────
+  async function loadAdminApplications(page = 1) {
+    const tbody = document.getElementById('apps-tbody');
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-overlay"><div class="spinner"></div></td></tr>';
+    try {
+      const res = await adminAPI.applications({ page, limit: 15 });
+      allAppData = res.data || [];
+      renderAppsTable(allAppData);
+      renderPager('apps-pagination', res.totalPages || 1, page, loadAdminApplications);
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger);padding:1rem">${err.message}</td></tr>`;
+    }
+  }
+
+  function setAppFilter(status, btn) {
+    appFilter = status;
+    document.querySelectorAll('.app-filter').forEach(b => { b.classList.remove('active-filter','btn-primary'); });
+    btn.classList.add('active-filter','btn-primary');
+    renderAppsTable(allAppData);
+  }
+
+  function renderAppsTable(apps) {
+    const filtered = appFilter === 'all' ? apps : apps.filter(a => a.status === appFilter);
+    const tbody = document.getElementById('apps-tbody');
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><h3>No ${appFilter === 'all' ? '' : appFilter} applications</h3></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = filtered.map(a => `
+      <tr>
+        <td>
+          <div style="font-weight:500">${a.property_title}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary)">${a.city}</div>
+        </td>
+        <td>
+          <div style="font-size:0.85rem">${a.tenant_name}</div>
+          <div style="font-size:0.75rem;color:var(--text-secondary)">${a.tenant_email}</div>
+        </td>
+        <td style="font-size:0.85rem">${a.owner_name}</td>
+        <td style="color:var(--text-secondary);font-size:0.82rem">${formatDate(a.applied_at)}</td>
+        <td style="color:var(--text-secondary);font-size:0.82rem">${formatDate(a.resolved_at)}</td>
+        <td>${statusBadge(a.status)}</td>
+      </tr>`).join('');
+  }
+
+  // ── Shared Pager ──────────────────────────────
+  function renderPager(containerId, total, current, loadFn) {
+    const pg = document.getElementById(containerId);
+    if (total <= 1) { pg.innerHTML = ''; return; }
+    let html = '';
+    if (current > 1) html += `<button class="btn btn-ghost btn-sm" onclick="(${loadFn.name})(${current-1})">‹ Prev</button>`;
+    for (let i = Math.max(1,current-2); i <= Math.min(total,current+2); i++)
+      html += `<button class="btn btn-sm ${i===current?'btn-primary':'btn-ghost'}" onclick="(${loadFn.name})(${i})">${i}</button>`;
+    if (current < total) html += `<button class="btn btn-ghost btn-sm" onclick="(${loadFn.name})(${current+1})">Next ›</button>`;
+    pg.innerHTML = html;
+  }
+
+  function escAttr(s) { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  // ── Init
+  loadStats();
+  loadUsers();
+  loadAdminProperties();
+  loadAdminApplications();
+
+  // Auto-refresh stats every 60 seconds
+  setInterval(loadStats, 60000);
+</script>
+<script src="/js/chatbot.js"></script>
+</body>
+</html>
