@@ -43,7 +43,10 @@ app.use(passport.session());
 // ── General rate limiter on all /api routes ─────────────────────────────────
 app.use('/api', apiLimiter);
 
-// ── Serve static frontend (root dir serves rentlux_WORKING.html etc.) ───────
+// ── Static Files ────────────────────────────────────────────────────────────
+// 1. Serve frontend/ dir first — /css/theme.css, /js/api.js, /tenant/dashboard.html all resolve here
+app.use(express.static(path.join(__dirname, 'frontend')));
+// 2. Serve root dir as fallback (for rentlux_WORKING.html, node_modules etc.)
 app.use(express.static(path.join(__dirname)));
 
 // ── API Routes ───────────────────────────────────────────────────────────────
@@ -68,15 +71,18 @@ app.get('/api/health', (req, res) =>
   })
 );
 
-// ── Root → serve rentlux_WORKING.html ────────────────────────────────────────
+// ── Root → serve frontend landing page (has Google OAuth + auth modal) ──────
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
 });
 
-// ── SPA fallback for all non-API routes ─────────────────────────────────────
+// ── SPA fallback — try the file in frontend/, else fall back to index.html ──
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
+  const file = path.join(__dirname, 'frontend', req.path);
+  res.sendFile(file, err => {
+    if (err) res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  });
 });
 
 // ── Global Error Handler (must be last) ─────────────────────────────────────

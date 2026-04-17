@@ -232,7 +232,16 @@
         <td style="color:var(--text-secondary);font-size:0.85rem">${u.email}</td>
         <td><span class="nav-role-badge role-${u.role}">${u.role}</span></td>
         <td style="color:var(--text-secondary);font-size:0.82rem">${formatDate(u.created_at)}</td>
-        <td>${u.role !== 'admin' ? `<button class="del-btn" title="Delete user" onclick="deleteUser('${u.id}','${escAttr(u.name)}')">🗑</button>` : '<span style="color:var(--text-muted);font-size:0.78rem">protected</span>'}</td>
+        <td>
+          ${u.role !== 'admin'
+            ? `<div style="display:flex;gap:0.3rem;">
+                 <button class="btn btn-ghost btn-sm" title="Change role"
+                   onclick="changeRole('${u.id}','${u.role}','${escAttr(u.name)}')">🔄</button>
+                 <button class="del-btn" title="Delete user"
+                   onclick="deleteUser('${u.id}','${escAttr(u.name)}')">🗑</button>
+               </div>`
+            : '<span style="color:var(--text-muted);font-size:0.78rem">protected</span>'}
+        </td>
       </tr>`).join('');
   }
 
@@ -241,6 +250,16 @@
     try {
       await adminAPI.deleteUser(id);
       showToast('User deleted');
+      loadUsers(); loadStats();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function changeRole(id, currentRole, name) {
+    const newRole = currentRole === 'tenant' ? 'owner' : 'tenant';
+    if (!confirm(`Change "${name}" from ${currentRole} → ${newRole}?`)) return;
+    try {
+      await adminAPI.changeUserRole(id, newRole);
+      showToast(`✅ ${name} is now a ${newRole}`);
       loadUsers(); loadStats();
     } catch (err) { showToast(err.message, 'error'); }
   }

@@ -59,11 +59,13 @@ const ownerAPI = {
 // ── Admin
 const adminAPI = {
   stats           : ()       => apiCall('GET',    '/admin/stats'),
+  analytics       : (days)   => apiCall('GET',    `/admin/analytics?days=${days||7}`),
   users           : (q = {}) => apiCall('GET',    `/admin/users?${new URLSearchParams(q)}`),
   properties      : (q = {}) => apiCall('GET',    `/admin/properties?${new URLSearchParams(q)}`),
   applications    : (q = {}) => apiCall('GET',    `/admin/applications?${new URLSearchParams(q)}`),
   deleteUser      : (id)     => apiCall('DELETE', `/admin/users/${id}`),
   deleteProperty  : (id)     => apiCall('DELETE', `/admin/properties/${id}`),
+  changeUserRole  : (id, role) => apiCall('PUT',  `/admin/users/${id}/role`, { role }),
 };
 
 // ── Agreements
