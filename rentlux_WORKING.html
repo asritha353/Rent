@@ -1441,13 +1441,32 @@ window.addEventListener('resize',function(){var w=heroEl.clientWidth,h=heroEl.cl
 //  LEAFLET REAL MAP
 // ══════════════════════════════════════════════
 var CITIES = {
-  hyderabad:  {lat:17.385,lng:78.487,zoom:12,backendCity:'Hyderabad', props:466,owners:320,avg:'₹22,000'},
-  vijayawada: {lat:16.506,lng:80.648,zoom:12,backendCity:'Vijayawada',props:103,owners:80, avg:'₹14,000'},
-  mumbai:     {lat:19.076,lng:72.878,zoom:11,backendCity:'Mumbai',    props:3200,owners:880,avg:'₹48,000'},
-  bangalore:  {lat:12.972,lng:77.595,zoom:11,backendCity:'Bangalore', props:2800,owners:720,avg:'₹32,000'},
-  delhi:      {lat:28.704,lng:77.103,zoom:11,backendCity:'Delhi',     props:4100,owners:1100,avg:'₹35,000'},
-  chennai:    {lat:13.083,lng:80.271,zoom:11,backendCity:'Chennai',   props:1800,owners:480,avg:'₹28,000'},
-  pune:       {lat:18.520,lng:73.857,zoom:12,backendCity:'Pune',      props:2100,owners:560,avg:'₹26,000'},
+  // ── Telangana
+  hyderabad    : {lat:17.385,lng:78.487,zoom:12,backendCity:'Hyderabad',         props:532,owners:340,avg:'₹22,000'},
+  warangal     : {lat:17.977,lng:79.601,zoom:12,backendCity:'Warangal',          props:98, owners:65, avg:'₹10,000'},
+  nizamabad    : {lat:18.672,lng:78.094,zoom:12,backendCity:'Nizamabad',         props:54, owners:38, avg:'₹9,000'},
+  // ── Andhra Pradesh
+  visakhapatnam: {lat:17.686,lng:83.218,zoom:12,backendCity:'Visakhapatnam',    props:284,owners:185,avg:'₹18,000'},
+  vijayawada   : {lat:16.506,lng:80.648,zoom:12,backendCity:'Vijayawada',        props:162,owners:105,avg:'₹14,000'},
+  tirupati     : {lat:13.628,lng:79.420,zoom:13,backendCity:'Tirupati',          props:88, owners:58, avg:'₹11,000'},
+  guntur       : {lat:16.308,lng:80.436,zoom:12,backendCity:'Guntur',            props:72, owners:48, avg:'₹10,500'},
+  // ── Karnataka
+  bengaluru    : {lat:12.972,lng:77.595,zoom:11,backendCity:'Bengaluru',         props:1840,owners:740,avg:'₹32,000'},
+  mysuru       : {lat:12.296,lng:76.639,zoom:12,backendCity:'Mysuru',            props:194,owners:130,avg:'₹14,000'},
+  hubli        : {lat:15.362,lng:75.125,zoom:12,backendCity:'Hubli',             props:88, owners:60, avg:'₹11,000'},
+  mangaluru    : {lat:12.914,lng:74.856,zoom:12,backendCity:'Mangaluru',         props:142,owners:95, avg:'₹16,000'},
+  // ── Tamil Nadu
+  chennai      : {lat:13.083,lng:80.271,zoom:11,backendCity:'Chennai',           props:1620,owners:520,avg:'₹26,000'},
+  coimbatore   : {lat:11.017,lng:76.966,zoom:12,backendCity:'Coimbatore',        props:298,owners:195,avg:'₹14,000'},
+  madurai      : {lat:9.926, lng:78.120,zoom:12,backendCity:'Madurai',           props:184,owners:118,avg:'₹11,000'},
+  salem        : {lat:11.664,lng:78.147,zoom:12,backendCity:'Salem',             props:96, owners:64, avg:'₹10,000'},
+  // ── Kerala
+  kochi        : {lat:9.931, lng:76.267,zoom:12,backendCity:'Kochi',             props:386,owners:245,avg:'₹22,000'},
+  thiruvananthapuram:{lat:8.524,lng:76.936,zoom:12,backendCity:'Thiruvananthapuram',props:228,owners:148,avg:'₹18,000'},
+  kozhikode    : {lat:11.258,lng:75.780,zoom:12,backendCity:'Kozhikode',         props:148,owners:96, avg:'₹13,000'},
+  thrissur     : {lat:10.524,lng:76.214,zoom:12,backendCity:'Thrissur',          props:124,owners:82, avg:'₹14,000'},
+  // ── Union Territory
+  puducherry   : {lat:11.942,lng:79.808,zoom:13,backendCity:'Puducherry',        props:112,owners:74, avg:'₹16,000'},
 };
 var realMap=null, mapMarker=null, mapReady=false;
 function initMap(){
