@@ -47,9 +47,9 @@ app.use(passport.session());
 // ── Rate limiting on all /api routes ──────────────────────────────────────
 app.use('/api', apiLimiter);
 
-// ── Static files (serve frontend from root directory) ─────────────────────
-app.use(express.static(path.join(__dirname)));
+// ── Static files ─────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, 'frontend')));
+app.use(express.static(path.join(__dirname)));
 
 // ── API Routes ────────────────────────────────────────────────────────────
 app.use('/api/auth',       require('./routes/auth'));
@@ -73,7 +73,7 @@ app.get('/api/health', (req, res) =>
   })
 );
 
-// ── Dashboard routes (role-specific HTML pages) ───────────────────────────
+// ── Dashboard routes (role-specific pages inside frontend/) ──────────────
 app.get('/tenant/dashboard.html', (req, res) =>
   res.sendFile(path.join(__dirname, 'frontend', 'tenant', 'dashboard.html'))
 );
@@ -84,15 +84,15 @@ app.get('/admin/dashboard.html', (req, res) =>
   res.sendFile(path.join(__dirname, 'frontend', 'admin', 'dashboard.html'))
 );
 
-// ── Root → serve main frontend ────────────────────────────────────────────
+// ── Root → serve the original premium frontend ────────────────────────────
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
 });
 
-// ── SPA fallback ──────────────────────────────────────────────────────────
+// ── SPA fallback — non-API routes all go to main frontend ────────────────
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
 });
 
 // ── Global Error Handler (must be last) ───────────────────────────────────

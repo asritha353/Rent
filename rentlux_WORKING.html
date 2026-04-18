@@ -724,7 +724,31 @@
    RENTLUX — COMPLETE WORKING SCRIPT
    API connects to http://localhost:5000
 ══════════════════════════════════════════════ */
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
+
+// ── Google OAuth token pickup (after redirect from /api/auth/google/callback)
+(function pickupGoogleToken() {
+  var params = new URLSearchParams(window.location.search);
+  var token  = params.get('google_token');
+  var role   = params.get('google_role');
+  if (!token) return;
+  try {
+    // Decode JWT payload (no verification — server already verified)
+    var payload = JSON.parse(atob(token.split('.')[1]));
+    var user    = { id: payload.id, name: payload.name, email: payload.email, role: payload.role };
+    // Store using rentlux_WORKING.html's own keys
+    localStorage.setItem('rentlux_user',  JSON.stringify(user));
+    localStorage.setItem('rentlux_token', token);
+    // Clean URL (remove token from address bar)
+    window.history.replaceState({}, document.title, '/');
+    // Update runtime vars so updateNavForUser() works immediately
+    currentUser = user;
+    authToken   = token;
+  } catch(e) {
+    console.error('[Auth] Google token parse error:', e);
+  }
+})();
+
 
 // ── Auth state
 let currentUser = JSON.parse(localStorage.getItem('rentlux_user') || 'null');
@@ -1329,9 +1353,11 @@ async function submitListing() {
 
 function handleGoogleLogin() {
   closeModal();
-  var u = { id:'g1', name:'Google User', email:'google@gmail.com', role:'tenant' };
-  saveAuth(u, 'google-demo-token');
-  showToast('🔐','Signed in','Welcome, Google User!');
+  // Get selected role from signup form (default to tenant on login)
+  var roleEl = document.getElementById('signup-role');
+  var role = (roleEl && roleEl.value && roleEl.value !== 'agent') ? roleEl.value : 'tenant';
+  // Redirect to backend Google OAuth — real authentication
+  window.location.href = '/api/auth/google?role=' + role;
 }
 
 // ══════════════════════════════════════════════
