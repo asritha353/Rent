@@ -47,9 +47,16 @@ app.use(passport.session());
 // ── Rate limiting on all /api routes ──────────────────────────────────────
 app.use('/api', apiLimiter);
 
-// ── Static files ─────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'frontend')));
-app.use(express.static(path.join(__dirname)));
+// ── Root → serve the original premium frontend (must be before static middleware) ───
+// IMPORTANT: This must come BEFORE express.static so index.html in frontend/
+// does not override rentlux_WORKING.html at the root URL.
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
+});
+
+// ── Static files ────────────────────────────────────────────────────────
+app.use(express.static(path.join(__dirname)));                            // serves rentlux_WORKING.html etc.
+app.use(express.static(path.join(__dirname, 'frontend'), { index: false })); // CSS/JS for role dashboards
 
 // ── API Routes ────────────────────────────────────────────────────────────
 app.use('/api/auth',       require('./routes/auth'));
@@ -84,12 +91,7 @@ app.get('/admin/dashboard.html', (req, res) =>
   res.sendFile(path.join(__dirname, 'frontend', 'admin', 'dashboard.html'))
 );
 
-// ── Root → serve the original premium frontend ────────────────────────────
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
-});
-
-// ── SPA fallback — non-API routes all go to main frontend ────────────────
+// ── SPA fallback — non-API, non-file routes all fall back to main frontend ──
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) return next();
   res.sendFile(path.join(__dirname, 'rentlux_WORKING.html'));
