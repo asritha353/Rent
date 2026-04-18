@@ -1,48 +1,60 @@
-# ──────────────────────────────────────────────
-#  RentLux — .gitignore
-# ──────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+#  RentLux — .gitignore  (Node.js + Express + SQL Server + Windows)
+# ══════════════════════════════════════════════════════════════════════════════
 
-# ── Dependencies ──────────────────────────────
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules/
 .npm/
+.yarn/
+.pnp.*
+jspm_packages/
 
-# ── Environment & Secrets ─────────────────────
+# ── Environment & Secrets  ────────────────────────────────────────────────────
+# NEVER commit real credentials — keep .env.example as the template
 .env
 .env.*
 !.env.example
 
-# ── Logs ──────────────────────────────────────
+# ── Logs ──────────────────────────────────────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 pids/
 *.pid
 *.seed
 *.pid.lock
 
-# ── Runtime / Build ───────────────────────────
+# ── Runtime / Build output ────────────────────────────────────────────────────
 dist/
 build/
+out/
 .cache/
 .parcel-cache/
+.next/
+.nuxt/
 coverage/
+*.tsbuildinfo
 
-# ── Database files ────────────────────────────
+# ── SQL Server / Database files ───────────────────────────────────────────────
 database/*.mdf
 database/*.ldf
 database/*.bak
+database/*.ndf
 *.sqlite
 *.sqlite3
 *.db
 
-# ── Downloaded / Generated assets ────────────
-# Prevent locally downloaded images from being committed
+# ── Uploaded / Downloaded assets ─────────────────────────────────────────────
+uploads/
 frontend/images/downloaded/
+frontend/images/uploads/
 downloads/
+public/uploads/
 
-# ── OS files ──────────────────────────────────
+# ── OS-specific files ─────────────────────────────────────────────────────────
 .DS_Store
 .DS_Store?
 ._*
@@ -50,11 +62,14 @@ downloads/
 .Trashes
 ehthumbs.db
 Thumbs.db
+Thumbs.db:encryptable
 desktop.ini
+$RECYCLE.BIN/
 
-# ── Editor / IDE ──────────────────────────────
-.vscode/
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
+.vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.suo
 *.ntvs*
@@ -63,10 +78,26 @@ desktop.ini
 *.sw?
 *.swp
 *.swo
+.history/
 
-# ── Temporary files ───────────────────────────
+# ── Temporary & misc ──────────────────────────────────────────────────────────
 tmp/
 temp/
 *.tmp
 *.bak
 *.orig
+*.rej
+*.patch
+
+# ── Test coverage ─────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# ── Google OAuth / Secrets ────────────────────────────────────────────────────
+*.pem
+*.key
+*.cert
+*.p12
+client_secret*.json
