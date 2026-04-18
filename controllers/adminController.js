@@ -231,18 +231,17 @@ const changeUserRole = async (req, res) => {
     const { role } = req.body;
 
     if (!['tenant', 'owner'].includes(role))
-      return res.status(400).json({ success: false, message: 'Role must be tenant or owner (admins cannot be assigned via API)' });
-
+      return res.status(400).json({ success: false, message: 'Role must be tenant or owner' });
     if (id === req.user.id)
-      return res.status(400).json({ success: false, message: 'You cannot change your own role' });
+      return res.status(400).json({ success: false, message: 'Cannot change your own role' });
 
-    const userCheck = await query(
-      'SELECT role FROM Users WHERE id = @id',
+    const check = await query(
+      'SELECT id, role FROM Users WHERE id = @id',
       { id: { type: sql.VarChar(50), value: id } }
     );
-    if (userCheck.recordset.length === 0)
+    if (check.recordset.length === 0)
       return res.status(404).json({ success: false, message: 'User not found' });
-    if (userCheck.recordset[0].role === 'admin')
+    if (check.recordset[0].role === 'admin')
       return res.status(403).json({ success: false, message: 'Cannot change role of another admin' });
 
     await query(
@@ -253,7 +252,7 @@ const changeUserRole = async (req, res) => {
       }
     );
 
-    res.json({ success: true, message: `User role updated to ${role}` });
+    res.json({ success: true, message: `Role changed to ${role}` });
   } catch (err) {
     console.error('[Admin] changeUserRole:', err.message);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -265,44 +264,44 @@ const changeUserRole = async (req, res) => {
 // ─────────────────────────────────────────────
 const getAnalytics = async (req, res) => {
   try {
-    const days = Math.min(30, parseInt(req.query.days || '7'));
-
-    const [signups, applications, roleBreakdown] = await Promise.all([
-      query(
-        `SELECT
-           CONVERT(DATE, created_at) AS date,
-           COUNT(*) AS count
-         FROM Users
-         WHERE created_at >= DATEADD(DAY, -@days, GETDATE())
-         GROUP BY CONVERT(DATE, created_at)
-         ORDER BY date`,
-        { days: { type: sql.Int, value: days } }
-      ),
-      query(
-        `SELECT
-           CONVERT(DATE, applied_at) AS date,
-           COUNT(*) AS count,
-           SUM(CASE WHEN status='accepted' THEN 1 ELSE 0 END) AS accepted,
-           SUM(CASE WHEN status='pending'  THEN 1 ELSE 0 END) AS pending,
-           SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) AS rejected
-         FROM Applications
-         WHERE applied_at >= DATEADD(DAY, -@days, GETDATE())
-         GROUP BY CONVERT(DATE, applied_at)
-         ORDER BY date`,
-        { days: { type: sql.Int, value: days } }
-      ),
-      query(
-        `SELECT role, COUNT(*) AS count FROM Users GROUP BY role`
-      ),
+    const [signups, applications, roleBreakdown, cityBreakdown] = await Promise.all([
+      // Daily signups — last 30 days
+      query(`
+        SELECT CAST(created_at AS DATE) AS date, COUNT(*) AS count
+        FROM Users
+        WHERE created_at >= DATEADD(DAY, -30, GETDATE())
+        GROUP BY CAST(created_at AS DATE)
+        ORDER BY date DESC
+      `),
+      // Daily applications — last 30 days
+      query(`
+        SELECT CAST(applied_at AS DATE) AS date, COUNT(*) AS count
+        FROM Applications
+        WHERE applied_at >= DATEADD(DAY, -30, GETDATE())
+        GROUP BY CAST(applied_at AS DATE)
+        ORDER BY date DESC
+      `),
+      // Role breakdown
+      query(`
+        SELECT role, COUNT(*) AS count
+        FROM Users
+        GROUP BY role
+      `),
+      // Applications by status
+      query(`
+        SELECT status, COUNT(*) AS count
+        FROM Applications
+        GROUP BY status
+      `),
     ]);
 
     res.json({
       success: true,
       data: {
-        period       : `Last ${days} days`,
-        signups      : signups.recordset,
-        applications : applications.recordset,
-        roleBreakdown: roleBreakdown.recordset,
+        signupsLast30Days     : signups.recordset,
+        applicationsLast30Days: applications.recordset,
+        roleBreakdown         : roleBreakdown.recordset,
+        applicationsByStatus  : cityBreakdown.recordset,
       },
     });
   } catch (err) {

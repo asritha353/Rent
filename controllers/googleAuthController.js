@@ -1,14 +1,13 @@
-// controllers/googleAuthController.js — Passport Google OAuth 2.0 Strategy
+// controllers/googleAuthController.js — Google OAuth via Passport
 const passport   = require('passport');
-const { Strategy: GoogleStrategy } = require('passport-google-oauth20');
-const bcrypt     = require('bcryptjs');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt        = require('jsonwebtoken');
+const bcrypt     = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
-const { sql, query } = require('../database/db');
+const { sql, query, getPool } = require('../database/db');
 
 const SECRET = process.env.JWT_SECRET || 'rentlux_secret_2024';
 
-/** Generate a signed JWT (same shape as email/password auth) */
 function makeToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name, role: user.role },
@@ -17,72 +16,80 @@ function makeToken(user) {
   );
 }
 
-// ── Passport Google Strategy ────────────────────────────────────────────────
+// ── Configure Passport Google Strategy ────────────────────────────────────
 passport.use(new GoogleStrategy(
   {
-    clientID     : process.env.GOOGLE_CLIENT_ID,
-    clientSecret : process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL  : process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
+    clientID    : process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL : process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
     passReqToCallback: true,
   },
   async (req, accessToken, refreshToken, profile, done) => {
     try {
       const email    = profile.emails?.[0]?.value;
-      const name     = profile.displayName || profile.emails?.[0]?.value?.split('@')[0];
       const googleId = profile.id;
-      const avatar   = profile.photos?.[0]?.value || null;
+      const name     = profile.displayName || email?.split('@')[0] || 'User';
+      // Role can be passed as query param during the initial redirect
+      const role     = (req.query.state && ['tenant','owner'].includes(req.query.state))
+                         ? req.query.state
+                         : 'tenant';
 
-      if (!email) return done(new Error('Google did not return an email address.'), null);
+      if (!email) return done(new Error('No email from Google'), null);
 
-      // Find existing user by email
-      const existing = await query(
-        'SELECT id, name, email, role, google_id FROM Users WHERE email = @email',
-        { email: { type: sql.NVarChar(100), value: email } }
+      // Try find by google_id first, then by email
+      let result = await query(
+        `SELECT id, name, email, role, google_id FROM Users WHERE google_id = @google_id`,
+        { google_id: { type: sql.NVarChar(100), value: googleId } }
       );
 
       let user;
       let isNew = false;
 
-      if (existing.recordset.length > 0) {
-        // ── Returning user ─────────────────────────────────────────────────
-        user = existing.recordset[0];
-        // Link google_id if this is their first Google login
-        if (!user.google_id) {
-          await query(
-            `UPDATE Users SET google_id = @gid, auth_provider = 'google', avatar_url = @avatar, updated_at = GETDATE() WHERE id = @id`,
-            {
-              gid   : { type: sql.NVarChar(100), value: googleId },
-              avatar: { type: sql.NVarChar(500), value: avatar },
-              id    : { type: sql.VarChar(50),   value: user.id },
-            }
-          );
-        }
+      if (result.recordset.length > 0) {
+        // Existing Google user — log in
+        user = result.recordset[0];
       } else {
-        // ── New user ───────────────────────────────────────────────────────
-        const id          = uuidv4();
-        const randomHash  = await bcrypt.hash(uuidv4(), 10); // unusable password
-        const defaultRole = (req.query.state === 'owner') ? 'owner' : 'tenant';
-
-        await query(
-          `INSERT INTO Users (id, name, email, password_hash, role, google_id, auth_provider, avatar_url, is_verified, is_active)
-           VALUES (@id, @name, @email, @hash, @role, @gid, 'google', @avatar, 1, 1)`,
-          {
-            id    : { type: sql.VarChar(50),    value: id },
-            name  : { type: sql.NVarChar(100),  value: name },
-            email : { type: sql.NVarChar(100),  value: email },
-            hash  : { type: sql.NVarChar(255),  value: randomHash },
-            role  : { type: sql.NVarChar(20),   value: defaultRole },
-            gid   : { type: sql.NVarChar(100),  value: googleId },
-            avatar: { type: sql.NVarChar(500),  value: avatar },
-          }
+        // Check if email already registered (local account)
+        result = await query(
+          `SELECT id, name, email, role, google_id FROM Users WHERE email = @email`,
+          { email: { type: sql.NVarChar(100), value: email } }
         );
 
-        user  = { id, name, email, role: defaultRole };
-        isNew = true;
-        console.log('[GoogleAuth] New user registered via Google:', email, '→', defaultRole);
+        if (result.recordset.length > 0) {
+          // Link Google to existing account
+          user = result.recordset[0];
+          await query(
+            `UPDATE Users SET google_id = @google_id, auth_provider = 'google' WHERE id = @id`,
+            {
+              google_id: { type: sql.NVarChar(100), value: googleId },
+              id        : { type: sql.VarChar(50),   value: user.id },
+            }
+          );
+        } else {
+          // Brand new Google user — create account
+          isNew = true;
+          const id       = 'u_' + uuidv4();
+          // Random unusable password hash (Google users never use password login)
+          const randHash = await bcrypt.hash(uuidv4(), 10);
+
+          await query(
+            `INSERT INTO Users (id, name, email, password_hash, role, google_id, auth_provider)
+             VALUES (@id, @name, @email, @hash, @role, @google_id, 'google')`,
+            {
+              id       : { type: sql.VarChar(50),    value: id },
+              name     : { type: sql.NVarChar(100),  value: name },
+              email    : { type: sql.NVarChar(100),  value: email },
+              hash     : { type: sql.NVarChar(255),  value: randHash },
+              role     : { type: sql.NVarChar(20),   value: role },
+              google_id: { type: sql.NVarChar(100),  value: googleId },
+            }
+          );
+
+          user = { id, name, email, role };
+          console.log('[GoogleAuth] New user created:', email, '→', role);
+        }
       }
 
-      console.log('[GoogleAuth] Login:', email, '→', user.role, isNew ? '(new)' : '(returning)');
       return done(null, { ...user, isNew });
     } catch (err) {
       console.error('[GoogleAuth] Strategy error:', err.message);
@@ -91,29 +98,44 @@ passport.use(new GoogleStrategy(
   }
 ));
 
-// Passport session serialization (minimal — we use JWT, not sessions, after callback)
+// Passport session serialization (minimal — we use JWT, not sessions)
 passport.serializeUser((user, done)   => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
+// ── Route Handlers ─────────────────────────────────────────────────────────
+
 /**
- * googleCallback — controller called after successful Google auth.
- * Issues JWT, redirects to frontend with token in URL.
+ * GET /api/auth/google?role=tenant|owner
+ * Starts the OAuth flow. Role is passed via `state` param.
  */
-const googleCallback = (req, res) => {
-  try {
-    const user  = req.user;
-    const token = makeToken(user);
-    // Redirect to frontend — JS picks up token from URL query param
-    const url = `/?token=${encodeURIComponent(token)}&role=${user.role}&newUser=${user.isNew}`;
-    res.redirect(url);
-  } catch (err) {
-    console.error('[GoogleAuth] Callback error:', err.message);
-    res.redirect('/?error=auth_failed');
-  }
+const initiateGoogleAuth = (req, res, next) => {
+  const role  = ['tenant', 'owner'].includes(req.query.role) ? req.query.role : 'tenant';
+  passport.authenticate('google', {
+    scope : ['profile', 'email'],
+    state : role,
+    prompt: 'select_account',
+  })(req, res, next);
 };
 
-const googleAuthFailed = (req, res) => {
-  res.redirect('/?error=google_auth_failed');
+/**
+ * GET /api/auth/google/callback
+ * Google redirects here. We issue a JWT and redirect the browser to the frontend.
+ */
+const googleCallback = (req, res, next) => {
+  passport.authenticate('google', { session: false, failureRedirect: '/?auth=failed' },
+    (err, user) => {
+      if (err || !user) {
+        console.error('[GoogleAuth] Callback error:', err?.message);
+        return res.redirect('/?auth=failed');
+      }
+
+      const token = makeToken(user);
+      // Redirect to frontend — token carried in URL hash (never in query string for security)
+      // Frontend reads this and stores in localStorage
+      const isNew = user.isNew ? '1' : '0';
+      res.redirect(`/?google_token=${token}&google_role=${user.role}&new_user=${isNew}`);
+    }
+  )(req, res, next);
 };
 
-module.exports = { passport, googleCallback, googleAuthFailed };
+module.exports = { initiateGoogleAuth, googleCallback, passportInit: passport.initialize() };
