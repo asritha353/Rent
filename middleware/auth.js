@@ -38,4 +38,23 @@ const requireRole = (...roles) => (req, res, next) => {
   next();
 };
 
-module.exports = { protect, requireRole };
+/**
+ * optionalAuth — like protect but never rejects.
+ * If token is valid → req.user = decoded payload
+ * If no token / invalid → req.user = { id:'guest', name:'Guest', role:'guest' }
+ */
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      req.user = jwt.verify(authHeader.split(' ')[1], SECRET);
+    } catch (_) {
+      req.user = { id: 'guest', name: 'Guest', role: 'guest' };
+    }
+  } else {
+    req.user = { id: 'guest', name: 'Guest', role: 'guest' };
+  }
+  next();
+};
+
+module.exports = { protect, requireRole, optionalAuth };

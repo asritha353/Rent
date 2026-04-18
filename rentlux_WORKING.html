@@ -672,7 +672,7 @@
     <div style="margin:32px 0 14px;font-size:0.76rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">For Tenants / Buyers</div>
     <div class="hiw-grid"><div class="hiw-card reveal"><div class="hiw-number">1</div><div class="hiw-icon">🔍</div><div class="hiw-title">Search & Filter</div><p class="hiw-desc">Browse verified listings with advanced filters — location, budget, BHK, type, and amenities.</p></div><div class="hiw-card reveal reveal-d1"><div class="hiw-number">2</div><div class="hiw-icon">🔖</div><div class="hiw-title">Shortlist & Compare</div><p class="hiw-desc">Save favorites, compare up to 3 properties side-by-side, and share with family instantly.</p></div><div class="hiw-card reveal reveal-d2"><div class="hiw-number">3</div><div class="hiw-icon">📞</div><div class="hiw-title">Contact & Visit</div><p class="hiw-desc">Call or WhatsApp the owner. Schedule an in-person or virtual site visit in one click.</p></div><div class="hiw-card reveal reveal-d3"><div class="hiw-number">4</div><div class="hiw-icon">📝</div><div class="hiw-title">Sign & Move In</div><p class="hiw-desc">Digital agreement with e-signature, pay deposit online, and get instant key access.</p></div></div>
     <div style="margin:36px 0 14px;font-size:0.76rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">For Property Owners</div>
-    <div class="hiw-grid"><div class="hiw-card reveal"><div class="hiw-number">1</div><div class="hiw-icon">📋</div><div class="hiw-title">Create Listing</div><p class="hiw-desc">Fill the smart form with photos, price, amenities — takes under 5 minutes to go live.</p></div><div class="hiw-card reveal reveal-d1"><div class="hiw-number">2</div><div class="hiw-icon">✅</div><div class="hiw-title">Get Verified</div><p class="hiw-desc">Submit property documents — verified badge boosts your listing visibility by 3×.</p></div><div class="hiw-card reveal reveal-d2"><div class="hiw-number">3</div><div class="hiw-icon">📩</div><div class="hiw-title">Receive Enquiries</div><p class="hiw-desc">Get notified via app, SMS, and email the moment a verified buyer shows interest.</p></div><div class="hiw-card reveal reveal-d3"><div class="hiw-number">4</div><div class="hiw-icon">💰</div><div class="hiw-title">Collect Rent Online</div><p class="hiw-desc">Automated rent collection, UPI reminders, digital receipts, and real-time income tracking.</p></div></div>
+    <div class="hiw-grid"><div class="hiw-card reveal"><div class="hiw-number">1</div><div class="hiw-icon">📋</div><div class="hiw-title">Create Listing</div><p class="hiw-desc">Fill the smart form with title, city, price, photos and amenities — your listing goes live in minutes.</p></div><div class="hiw-card reveal reveal-d1"><div class="hiw-number">2</div><div class="hiw-icon">✅</div><div class="hiw-title">Get Verified</div><p class="hiw-desc">Submit property documents — a verified badge boosts your listing visibility by 3× to trusted tenants.</p></div><div class="hiw-card reveal reveal-d2"><div class="hiw-number">3</div><div class="hiw-icon">📩</div><div class="hiw-title">Receive Applications</div><p class="hiw-desc">Review tenant applications from your owner dashboard. Accept or reject with one click — instant notifications sent.</p></div><div class="hiw-card reveal reveal-d3"><div class="hiw-number">4</div><div class="hiw-icon">📝</div><div class="hiw-title">Digital Agreement</div><p class="hiw-desc">Once you accept a tenant, a legally-valid digital rental agreement is auto-generated and shared with both parties.</p></div></div>
   </div>
 </div>
 
@@ -699,12 +699,21 @@
       <div class="mfg"><label class="mfl">Email Address</label><input type="email" class="mfi" id="login-email" placeholder="you@example.com"></div>
       <div class="mfg"><label class="mfl">Password</label><input type="password" class="mfi" id="login-pass" placeholder="••••••••"></div>
       <button class="modal-submit" onclick="doLogin()">Sign In</button>
+      <!-- Demo credentials panel -->
+      <div style="margin-top:14px;background:var(--warm);border:1px solid var(--brd);border-radius:11px;padding:12px 14px;">
+        <div style="font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:9px;">🔑 Quick Demo Login</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <button onclick="quickLogin('tenant@demo.com','demo123')" style="text-align:left;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;font-family:Outfit,sans-serif;font-size:0.75rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--brd)'">🏠 <strong>Tenant</strong> — tenant@demo.com / demo123</button>
+          <button onclick="quickLogin('rajesh.owner@rentlux.com','Owner@123')" style="text-align:left;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;font-family:Outfit,sans-serif;font-size:0.75rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--brd)'">🏡 <strong>Owner</strong> — rajesh.owner@rentlux.com / Owner@123</button>
+          <button onclick="quickLogin('admin@rentlux.com','Admin@123')" style="text-align:left;padding:7px 10px;border:1.5px solid var(--brd);border-radius:8px;background:#fff;font-family:Outfit,sans-serif;font-size:0.75rem;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='#c0392b'" onmouseout="this.style.borderColor='var(--brd)'">👑 <strong>Admin</strong> — admin@rentlux.com / Admin@123</button>
+        </div>
+      </div>
       <p class="modal-hint">No account? <a onclick="switchModalTab('signup')">Sign up free</a></p>
     </div>
     <div id="modal-signup-form" style="display:none">
       <div class="mfg"><label class="mfl">Full Name</label><input type="text" class="mfi" id="signup-name" placeholder="Your full name"></div>
       <div class="mfg"><label class="mfl">Email Address</label><input type="email" class="mfi" id="signup-email" placeholder="you@example.com"></div>
-      <div class="mfg"><label class="mfl">I am a</label><select class="msel" id="signup-role"><option value="tenant">Tenant / Buyer</option><option value="owner">Property Owner / Landlord</option><option value="agent">Real Estate Agent</option></select></div>
+      <div class="mfg"><label class="mfl">I am a</label><select class="msel" id="signup-role"><option value="tenant">Tenant / Buyer</option><option value="owner">Property Owner / Landlord</option></select></div>
       <div class="mfg"><label class="mfl">Phone Number</label><input type="tel" class="mfi" id="signup-phone" placeholder="+91 98765 43210"></div>
       <div class="mfg"><label class="mfl">Password</label><input type="password" class="mfi" id="signup-pass" placeholder="Minimum 8 characters"></div>
       <button class="modal-submit" onclick="doSignup()">Create Account</button>
@@ -899,35 +908,48 @@ function propCardHTML(p) {
     + '</div></div>';
 }
 
-// ── Load property listings
+// ── Load property listings (reads ALL active filter chips)
 async function loadProperties() {
   var locEl = document.getElementById('location-filter');
-  var city  = locEl ? locEl.value.trim() : 'Hyderabad';
-  if (!city) city = 'Hyderabad';
+  var city  = locEl ? locEl.value.trim() : '';
 
-  // Read BHK chip — only one can be active
-  var bhk = '';
-  var activeChips = document.querySelectorAll('.filter-chip.active');
-  for (var i = 0; i < activeChips.length; i++) {
-    var t = activeChips[i].textContent.trim();
-    if (t === '1 BHK' || t === '1 RK') { bhk = '1'; break; }
-    if (t === '2 BHK') { bhk = '2'; break; }
-    if (t === '3 BHK') { bhk = '3'; break; }
-    if (t === '4+ BHK') { bhk = '4'; break; }
-  }
+  // ── Read all active filter chips by group ────────────────────────────────
+  var bhk='', propType='', propFor='', furnished='';
+  document.querySelectorAll('.filter-chip.active').forEach(function(c) {
+    var t = c.textContent.trim();
+    // BHK/Config group
+    if (t==='1 BHK'||t==='1 RK') bhk='1';
+    else if (t==='2 BHK') bhk='2';
+    else if (t==='3 BHK') bhk='3';
+    else if (t==='4+ BHK') bhk='4';
+    // Property Type group
+    else if (['Apartment','Villa','House','Office','Shop'].includes(t)) propType=t;
+    // Property For group
+    else if (t==='Rent') propFor='rent';
+    else if (t==='Buy/Sale') propFor='buy';
+    else if (t==='PG/Hostel') propFor='rent';
+    else if (t==='Commercial') propFor='commercial';
+    // Furnishing group
+    else if (t==='Fully Furnished') furnished='fully';
+    else if (t==='Semi') furnished='semi';
+    else if (t==='Unfurnished') furnished='unfurnished';
+  });
 
-  // Read price slider (value in Lakhs, convert to rupees for API)
-  var sliderEl = document.getElementById('price-slider');
+  // ── Price slider (Lakhs → Rupees) ────────────────────────────────────────
   var maxPriceRupees = '';
+  var sliderEl = document.getElementById('price-slider');
   if (sliderEl) {
     var lakhs = parseInt(sliderEl.value);
-    if (lakhs < 500) { // 500 = "Any Price"
-      maxPriceRupees = lakhs * 100000; // convert lakhs to rupees
-    }
+    if (lakhs < 500) maxPriceRupees = lakhs * 100000;
   }
 
-  var url = '/properties?city=' + encodeURIComponent(city) + '&limit=12';
+  // ── Build URL ─────────────────────────────────────────────────────────────
+  var url = '/properties?limit=12';
+  if (city) url += '&city=' + encodeURIComponent(city);
   if (bhk) url += '&bhk=' + bhk;
+  if (propType) url += '&type=' + encodeURIComponent(propType);
+  if (propFor) url += '&propertyFor=' + propFor;
+  if (furnished) url += '&furnished=' + furnished;
   if (maxPriceRupees) url += '&maxPrice=' + maxPriceRupees;
   console.log('[loadProperties] fetching:', url);
 
@@ -1270,6 +1292,11 @@ async function doLogin() {
   }
   showToast('❌','Failed','Wrong email or password. Try owner@demo.com / demo123');
 }
+async function quickLogin(email, pass) {
+  document.getElementById('login-email').value = email;
+  document.getElementById('login-pass').value  = pass;
+  await doLogin();
+}
 
 async function doSignup() {
   var nameEl  = document.getElementById('signup-name');
@@ -1277,6 +1304,7 @@ async function doSignup() {
   var passEl  = document.getElementById('signup-pass');
   var roleEl  = document.getElementById('signup-role');
   if (!nameEl || !emailEl || !passEl) return;
+
   var name  = nameEl.value.trim();
   var email = emailEl.value.trim();
   var pass  = passEl.value;
@@ -1604,18 +1632,29 @@ function switchModalTab(type){
   document.getElementById('modal-sub').textContent=type==='login'?'Sign in to your RentLux account':'Join thousands of property owners & tenants';
 }
 
-// ── Filter chip click — BHK single select, instant reload
+// ── Filter chip click — single-select per group, instant reload ─────────────
+var SINGLE_SELECT_GROUPS = [
+  ['Rent','Buy/Sale','PG/Hostel','Commercial'],
+  ['Apartment','Villa','House','Office','Shop'],
+  ['1 RK','1 BHK','2 BHK','3 BHK','4+ BHK'],
+  ['Fully Furnished','Semi','Unfurnished'],
+  ['Owner','Agent','Builder']
+];
 document.addEventListener('click',function(e){
   if(!e.target.classList.contains('filter-chip'))return;
   var chip=e.target;
   var txt=chip.textContent.trim();
-  var isBHK=/BHK|RK/.test(txt);
-  if(isBHK){
+  // Check if this chip belongs to a single-select group
+  var group=SINGLE_SELECT_GROUPS.find(function(g){return g.indexOf(txt)>-1;});
+  if(group){
     var wasActive=chip.classList.contains('active');
-    chip.parentElement.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active');});
-    if(!wasActive)chip.classList.add('active');
+    // Deselect all chips in same group (search entire panel)
+    document.querySelectorAll('.filter-chip').forEach(function(c){
+      if(group.indexOf(c.textContent.trim())>-1)c.classList.remove('active');
+    });
+    if(!wasActive)chip.classList.add('active'); // toggle on
   }else{
-    chip.classList.toggle('active');
+    chip.classList.toggle('active'); // amenities: multi-select
   }
   if(document.getElementById('page-listings').classList.contains('active')){
     clearTimeout(window._fd);
